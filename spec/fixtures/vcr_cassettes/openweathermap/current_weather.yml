@@ -1,0 +1,45 @@
+---
+http_interactions:
+- request:
+    method: get
+    uri: https://api.openweathermap.org/data/2.5/weather?appid=<API_KEY>&lat=40.7128&lon=-74.006&units=imperial
+    body:
+      encoding: US-ASCII
+      string: ''
+    headers:
+      Accept-Encoding:
+      - gzip;q=1.0,deflate;q=0.6,identity;q=0.3
+      Accept:
+      - "*/*"
+      User-Agent:
+      - Ruby
+  response:
+    status:
+      code: 200
+      message: OK
+    headers:
+      Server:
+      - openresty
+      Date:
+      - Wed, 05 Mar 2025 17:14:17 GMT
+      Content-Type:
+      - application/json; charset=utf-8
+      Content-Length:
+      - '524'
+      Connection:
+      - keep-alive
+      X-Cache-Key:
+      - "/data/2.5/weather?lat=40.71&lon=-74.01&units=imperial"
+      Access-Control-Allow-Origin:
+      - "*"
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Methods:
+      - GET, POST
+    body:
+      encoding: UTF-8
+      string: '{"coord":{"lon":-74.006,"lat":40.7128},"weather":[{"id":802,"main":"Clouds","description":"scattered
+        clouds","icon":"03d"}],"base":"stations","main":{"temp":53.15,"feels_like":51.6,"temp_min":49.95,"temp_max":58.96,"pressure":1009,"humidity":73,"sea_level":1009,"grnd_level":1007},"visibility":10000,"wind":{"speed":21.85,"deg":180,"gust":29.93},"clouds":{"all":40},"dt":1741194858,"sys":{"type":1,"id":4610,"country":"US","sunrise":1741173816,"sunset":1741215097},"timezone":-18000,"id":5128581,"name":"New
+        York","cod":200}'
+  recorded_at: Wed, 05 Mar 2025 17:14:18 GMT
+recorded_with: VCR 6.3.1
