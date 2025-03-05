@@ -42,6 +42,19 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # API calls
+  gem 'httparty'
+
+  # Environment variables
+  gem 'dotenv-rails', groups: [:development, :test]
+
+  # Testing and Debugging
+  gem 'rspec-rails'
+  gem 'webmock'
+  gem 'vcr'
+  gem 'pry'
+  gem 'pry-rails'
 end
 
 group :development do
