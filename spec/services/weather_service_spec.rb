@@ -29,9 +29,22 @@ RSpec.describe WeatherService do
                 service = WeatherService.new
                 result = service.get_forecast(lat: 40.7128, lon: -74.0060)
                 
+                # Verify result structure
                 expect(result).to be_a(Hash)
                 expect(result).to have_key(:daily_forecast)
                 expect(result[:daily_forecast]).to be_an(Array)
+                expect(result[:daily_forecast].length).to be > 0
+                
+                # Verify forecast structure
+                first_day = result[:daily_forecast].first
+                expect(first_day).to have_key(:date)
+                expect(first_day).to have_key(:high)
+                expect(first_day).to have_key(:low)
+                expect(first_day[:high]).to be_a(Numeric)
+                expect(first_day[:low]).to be_a(Numeric)
+                expect(first_day[:high]).to be >= first_day[:low]
+                
+                # Verify cache status
                 expect(result).to have_key(:from_cache)
                 expect(result[:from_cache]).to be(false)
             end
