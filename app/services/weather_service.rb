@@ -6,7 +6,7 @@ class WeatherService
 
     def get_current_temperature(lat:, lon:)
         # Call API
-        HTTParty.get(
+        response = HTTParty.get(
           "#{@base_url}/weather",
           query: {
             lat: lat,
@@ -15,5 +15,18 @@ class WeatherService
             units: 'imperial'
           }
         )
+
+        parse_response(response)
+    end
+
+    def parse_response(response)
+        if response.success?
+            {
+              temperature: response['main']['temp'],
+              from_cache: false
+            }
+        else
+            raise "API Error: #{response.code} - #{response.message}"
+        end
     end
   end
