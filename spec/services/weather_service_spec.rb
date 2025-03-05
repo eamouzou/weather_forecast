@@ -7,9 +7,15 @@ RSpec.describe WeatherService do
                 service = WeatherService.new
                 result = service.get_current_temperature(lat: 40.7128, lon: -74.0060)
                 
+                # Verify result is a hash
                 expect(result).to be_a(Hash)
+                
+                # Verify temperature data is within reasonable range
                 expect(result).to have_key(:temperature)
                 expect(result[:temperature]).to be_a(Numeric)
+                expect(result[:temperature]).to be_between(0, 150)
+                
+                # Verify cache status
                 expect(result).to have_key(:from_cache)
                 expect(result[:from_cache]).to be(false)
             end
