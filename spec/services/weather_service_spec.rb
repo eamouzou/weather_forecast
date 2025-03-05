@@ -1,3 +1,4 @@
+# spec/services/weather_service_spec.rb
 require 'rails_helper'
 
 RSpec.describe WeatherService do
