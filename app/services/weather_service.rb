@@ -1,22 +1,82 @@
 # app/services/weather_service.rb
 
 class WeatherService
-    def initialize
-      @base_url = Rails.application.config.weather_api[:base_url]
-      @api_key = Rails.application.config.weather_api[:api_key]
-    end
+  def initialize
+    @base_url = Rails.application.config.weather_api[:base_url]
+    @api_key = Rails.application.config.weather_api[:api_key]
+  end
 
-    def get_current_temperature(lat:, lon:)
-      fetch_with_cache("weather", lat, lon) do
-        fetch_current_temperature(lat: lat, lon: lon)
-      end
-    end
+  def get_current_temperature(lat:, lon:, force_refresh: false)
+    cache_key = "current_weather_#{lat}_#{lon}"
 
-    def get_forecast(lat:, lon:)
-      fetch_with_cache("forecast", lat, lon) do
-        fetch_forecast(lat: lat, lon: lon)
+    begin
+      # Log cache retrieval attempt
+      Rails.logger.info "Attempting to retrieve current weather from cache with key: #{cache_key}"
+
+      # Check cache unless force refresh is requested
+      unless force_refresh
+        cached_result = Rails.cache.read(cache_key)
+
+        if cached_result.present?
+          Rails.logger.info "Cache hit for current weather at (#{lat}, #{lon})"
+          cached_result[:from_cache] = true
+          return cached_result
+        else
+          Rails.logger.info "Cache miss for current weather at (#{lat}, #{lon})"
+        end
       end
+
+      # Fetch fresh data
+      result = fetch_current_temperature(lat: lat, lon: lon)
+
+      # Store in cache with expiration
+      Rails.cache.write(cache_key, result, expires_in: 30.minutes)
+
+      Rails.logger.info "Cached current weather for coordinates (#{lat}, #{lon})"
+
+      result
+    rescue => e
+      Rails.logger.error "Error in get_current_temperature: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      nil
     end
+  end
+
+  def get_forecast(lat:, lon:, force_refresh: false)
+    cache_key = "forecast_#{lat}_#{lon}"
+
+    begin
+      # Log cache retrieval attempt
+      Rails.logger.info "Attempting to retrieve forecast from cache with key: #{cache_key}"
+
+      # Check cache unless force refresh is requested
+      unless force_refresh
+        cached_result = Rails.cache.read(cache_key)
+
+        if cached_result.present?
+          Rails.logger.info "Cache hit for forecast at (#{lat}, #{lon})"
+          cached_result[:from_cache] = true
+          return cached_result
+        else
+          Rails.logger.info "Cache miss for forecast at (#{lat}, #{lon})"
+        end
+      end
+
+      # Fetch fresh data
+      result = fetch_forecast(lat: lat, lon: lon)
+
+      # Store in cache with longer expiration for forecast
+      Rails.cache.write(cache_key, result, expires_in: 1.hour)
+
+      Rails.logger.info "Cached forecast for coordinates (#{lat}, #{lon})"
+
+      result
+    rescue => e
+      Rails.logger.error "Error in get_forecast: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      nil
+    end
+  end
 
     private
 
