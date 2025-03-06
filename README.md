@@ -1,16 +1,18 @@
 # Weather Forecast Application
 
-A Ruby on Rails application that retrieves and displays weather forecasts based on user-provided addresses or ZIP codes, with 30-minute caching for improved performance.
+A Ruby on Rails application that retrieves and displays weather forecasts based on user-provided addresses or ZIP codes, with Redis caching and background job processing for improved performance and scalability.
 
 ## Features
 
 - 📍 Accept addresses or ZIP codes as input
 - 🌡️ Display current temperature and conditions
 - 📆 Show 5-day weather forecast with high/low temperatures
-- 🔄 Cache results for 30 minutes with visual status indicators
+- 🔄 Redis-based caching with visual status indicators
 - 🔍 Location autocomplete with smart suggestions
 - 🕒 Recent search history tracking
 - 📱 Responsive design for all devices
+- 🔧 Background jobs for asynchronous processing
+- 🛡️ Enhanced error handling with custom error types
 
 ## Table of Contents
 
@@ -29,13 +31,14 @@ A Ruby on Rails application that retrieves and displays weather forecasts based 
 - Ruby 3.2.2+
 - Rails 8.0.1+
 - PostgreSQL database
+- Redis server
 - OpenWeatherMap API
 
 ### Setup
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/weather_forecast.git
+   git clone https://github.com/eamouzou/weather_forecast.git
    cd weather_forecast
    ```
 
@@ -50,12 +53,22 @@ A Ruby on Rails application that retrieves and displays weather forecasts based 
    rails db:migrate
    ```
 
-4. Start the server:
+4. Start Redis server:
+   ```bash
+   redis-server
+   ```
+
+5. Start Sidekiq worker:
+   ```bash
+   bundle exec sidekiq
+   ```
+
+6. Start the Rails server:
    ```bash
    rails server
    ```
 
-5. Visit [http://localhost:3000](http://localhost:3000) in your browser
+7. Visit [http://localhost:3000](http://localhost:3000) in your browser
 
 ## Configuration
 
@@ -71,22 +84,28 @@ The application uses the OpenWeatherMap API. You'll need to obtain an API key:
    export OPENWEATHER_API_KEY=your_api_key
    ```
 
-   **Config File:**
-   Update `config/initializers/weather_api.rb` with your API key:
-   ```ruby
-   Rails.application.config.after_initialize do
-     Rails.application.config.weather_api = {
-       api_key: ENV['OPENWEATHER_API_KEY'] || 'your_api_key_here',
-       base_url: 'https://api.openweathermap.org/data/2.5'
-     }
-   end
-   ```
+### Redis Configuration
 
-### Caching Configuration
+Configure Redis connection settings:
 
-The application uses Rails' built-in caching with a 30-minute expiration:
-- In development: Memory store with 64MB capacity
-- In production: Should be configured to use Redis or Memcached
+```bash
+export REDIS_URL=redis://localhost:6379/1
+```
+
+For production, set appropriate connection parameters and security credentials:
+
+```bash
+export REDIS_URL=redis://username:password@redis.example.com:6379/1
+```
+
+### Sidekiq Configuration
+
+For Sidekiq monitoring in production:
+
+```bash
+export SIDEKIQ_USERNAME=admin
+export SIDEKIQ_PASSWORD=secure_password
+```
 
 ## Usage
 
@@ -102,6 +121,10 @@ The application uses Rails' built-in caching with a 30-minute expiration:
    - An indicator showing if the data is from cache
 
 3. Recent searches are saved for quick access
+
+4. Background jobs automatically refresh cached data
+
+5. Access the Sidekiq dashboard at [http://localhost:3000/sidekiq](http://localhost:3000/sidekiq) 
 
 ## Architecture
 
@@ -128,23 +151,21 @@ The application follows a service-oriented architecture with clear separation of
 │                 │       │  └───────────┘  │                        │
 └─────────────────┘       └─────────────────┘                        │
                                                                      │
-┌────────────────┐        ┌────────────────┐                         │
-│     Views      │        │    Helpers     │                         │
-│  ┌──────────┐  │        │  ┌──────────┐  │                         │
-│  │  Index   │  │        │  │  Weather │  │                         │
-│  └──────────┘  │        │  │  Helper  │  │                         │
-│  ┌──────────┐  │        │  └──────────┘  │                         │
-│  │   Show   │  │        └────────────────┘                         │
-│  └──────────┘  │                                                   │
-│  ┌──────────┐  │        ┌────────────────┐                         │
-│  │ Weather  │  │        │    Caching     │                         │
-│  │  Partial │  │        │  ┌──────────┐  │                         │
-│  └──────────┘  │        │  │ Rails    │  │                         │
-└────────────────┘        │  │ Cache    │  │                         │
+┌────────────────┐        ┌────────────────┐       ┌────────────────┐│
+│     Views      │        │    Helpers     │       │ Background Jobs ││
+│  ┌──────────┐  │        │  ┌──────────┐  │       │ ┌──────────┐   ││
+│  │  Index   │  │        │  │  Weather │  │       │ │ Weather  │   ││
+│  └──────────┘  │        │  │  Helper  │  │       │ │ Fetch Job│   ││
+│  ┌──────────┐  │        │  └──────────┘  │       │ └──────────┘   ││
+│  │   Show   │  │        └────────────────┘       │ ┌──────────┐   ││
+│  └──────────┘  │                                 │ │  Cache   │   ││
+│  ┌──────────┐  │        ┌────────────────┐       │ │Cleanup Job│  ││
+│  │ Weather  │  │        │    Caching     │       │ └──────────┘   ││
+│  │  Partial │  │        │  ┌──────────┐  │       └────────────────┘│
+│  └──────────┘  │        │  │  Redis   │  │                         │
+└────────────────┘        │  │  Cache   │  │                         │
                           │  └──────────┘  │                         │
                           └────────────────┘                         │
-                                                                     │
-                                                                     │
 ```
 
 ### Key Components
@@ -152,17 +173,12 @@ The application follows a service-oriented architecture with clear separation of
 1. **ForecastsController**: Handles user requests, manages flow between services and views
 2. **AddressParser**: Determines if input is a ZIP code or address, routes accordingly
 3. **GeocodingService**: Converts addresses/ZIP codes to coordinates via OpenWeatherMap API
-4. **WeatherService**: Fetches weather data and manages caching
+4. **WeatherService**: Fetches weather data and manages caching with custom error handling
 5. **WeatherHelper**: Provides view helpers for formatting weather data
-6. **Views**: Present weather data with responsive design
-
-### Design Patterns
-
-- **Service Objects Pattern**: Clear separation of business logic from controllers
-- **Adapter Pattern**: GeocodingService and WeatherService adapt external APIs to our domain
-- **Decorator Pattern**: WeatherHelper adds presentation logic to weather data
-- **Repository Pattern**: Services abstract data access behind consistent interfaces
-- **Template Method Pattern**: WeatherService uses a template method for caching
+6. **WeatherFetchJob**: Background job for asynchronous weather data fetching
+7. **CacheCleanupJob**: Maintenance job for Redis cache
+8. **Redis**: Persistent caching for improved performance
+9. **Sidekiq**: Background job processing
 
 ## Testing
 
@@ -173,11 +189,33 @@ The application includes comprehensive tests using RSpec:
 - **Helper Tests**: Validate formatting functions
 - **View Tests**: Check proper rendering of data
 - **Request Tests**: End-to-end verification of functionality
+- **Job Tests**: Confirm background jobs operate correctly
 
 Run the test suite with:
 
 ```bash
 bundle exec rspec
+```
+
+## Deployment
+
+The application includes configuration for production deployment:
+
+- **Procfile**: Defines process types for web and worker processes
+- **Sidekiq Configuration**: Settings for production job processing
+- **Redis Connection Pooling**: Efficient connection management
+
+For Heroku deployment:
+
+```bash
+heroku create
+heroku addons:create heroku-postgresql
+heroku addons:create heroku-redis
+heroku config:set OPENWEATHER_API_KEY=your_api_key
+heroku config:set SIDEKIQ_USERNAME=admin
+heroku config:set SIDEKIQ_PASSWORD=secure_password
+git push heroku main
+heroku run rails db:migrate
 ```
 
 ## API Limits
@@ -189,28 +227,15 @@ bundle exec rspec
 
 ### Implemented Optimizations:
 
-- **Caching**: Results are cached for 30 minutes to reduce API calls
-- **Minimal API Requests**: Each weather check requires 2 API calls (geocoding + weather)
+- **Redis Caching**: Results are cached for 30 minutes to reduce API calls
+- **Background Jobs**: Async processing of API requests
+- **Connection Pooling**: Efficient management of Redis connections
 - **Recent Searches**: Allows users to quickly access previous searches without new API calls
 
 ## Future Enhancements
 
-### Performance Improvements
-
-- Background processing for API calls using Sidekiq
-- More granular caching with partial updates
-- Advanced cache invalidation strategies
-
-### Feature Extensions
-
-- User accounts to save favorite locations
-- Weather alerts for saved locations
-- Historical weather data comparison
-- Weather maps and visualizations
-- Dark mode toggle
-
-### Architecture Improvements
-
-- API rate limiting and throttling
-- GraphQL API for more efficient data retrieval
-- React/Vue frontend for more interactive experience
+- User accounts with favorite locations
+- Weather alerts and notifications
+- Metrics and monitoring for Redis and Sidekiq
+- Geolocation-based automatic weather detection
+- Advanced forecast visualization with charts
