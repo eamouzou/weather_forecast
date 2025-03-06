@@ -259,6 +259,10 @@ GEM
     rake (13.2.1)
     rdoc (6.12.0)
       psych (>= 4.0.0)
+    redis (5.4.0)
+      redis-client (>= 0.22.0)
+    redis-client (0.24.0)
+      connection_pool
     regexp_parser (2.10.0)
     reline (0.6.0)
       io-console (~> 0.5)
@@ -309,6 +313,12 @@ GEM
       rubocop-rails (>= 2.30)
     ruby-progressbar (1.13.0)
     securerandom (0.4.1)
+    sidekiq (7.3.9)
+      base64
+      connection_pool (>= 2.3.0)
+      logger
+      rack (>= 2.2.4)
+      redis-client (>= 0.22.2)
     solid_cache (1.0.7)
       activejob (>= 7.2)
       activerecord (>= 7.2)
@@ -366,6 +376,7 @@ DEPENDENCIES
   bootsnap
   brakeman
   capybara
+  connection_pool (~> 2.4)
   debug
   dotenv-rails
   httparty
@@ -378,8 +389,10 @@ DEPENDENCIES
   puma (>= 5.0)
   rails (~> 8.0.1)
   rails-controller-testing
+  redis (~> 5.0)
   rspec-rails
   rubocop-rails-omakase
+  sidekiq (~> 7.1)
   solid_cache
   solid_queue
   thruster
