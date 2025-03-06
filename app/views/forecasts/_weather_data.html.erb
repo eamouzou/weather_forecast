@@ -85,7 +85,10 @@
                   <td><%= Date.parse(day[:date]).strftime("%a, %b %d") rescue day[:date] %></td>
                   <td><%= day[:high]&.round || 'N/A' %>°F</td>
                   <td><%= day[:low]&.round || 'N/A' %>°F</td>
-                  <td class="text-capitalize"><%= day[:description] || 'Unknown' %></td>
+                  <td class="text-capitalize">
+                    <%= weather_icon(day[:description]) %> 
+                    <%= day[:description] || 'Unknown' %>
+                  </td>
                   <td><%= day[:humidity] || 'N/A' %>%</td>
                 </tr>
               <% end %>
