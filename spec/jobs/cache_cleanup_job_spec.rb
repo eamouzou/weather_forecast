@@ -54,7 +54,7 @@ RSpec.describe CacheCleanupJob, type: :job do
     context 'with multiple weather-related entries' do
       before do
         redis.set('current_weather_37.7749_-122.4194', { temperature: 65.0 }.to_json)
-        redis.set('forecast_37.7749_-122.4194', { daily_forecast: [1, 2, 3] }.to_json)
+        redis.set('forecast_37.7749_-122.4194', { daily_forecast: [ 1, 2, 3 ] }.to_json)
       end
 
       it 'removes all weather-related entries' do
