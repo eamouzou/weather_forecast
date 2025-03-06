@@ -1,0 +1,14 @@
+---
+:concurrency: 5
+:queues:
+  - default
+  - weather_fetch
+  - critical
+
+:max_retries: 3
+
+:schedule:
+  cache_cleanup_job:
+    cron: "0 * * * *"
+    class: CacheCleanupJob
+    description: "Hourly cache cleanup"
