@@ -62,5 +62,9 @@ Rails.application.configure do
   config.action_controller.perform_caching = true
 
   # Use memory store for caching in development
-  config.cache_store = :memory_store, { size: 64.megabytes }
+  config.cache_store = :redis_cache_store, {
+    url: ENV.fetch('REDIS_URL') { 'redis://localhost:6379/1' },
+    pool_size: 5,
+    expires_in: 30.minutes
+  }
 end
