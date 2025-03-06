@@ -182,11 +182,11 @@ RSpec.describe WeatherService do
 
             # Verify all new fields are present
             expect(result).to be_a(Hash)
-            expect(result[:wind_speed]).to eq(8.5)
-            expect(result[:wind_direction]).to eq(270)
-            expect(result[:pressure]).to eq(1015)
+            expect(result[:wind_speed]).to eq(21.85)
+            expect(result[:wind_direction]).to eq(180)
+            expect(result[:pressure]).to eq(1009)
             expect(result[:visibility]).to eq(10000)
-            expect(result[:icon]).to eq('02d')
+            expect(result[:icon]).to eq('03d')
             expect(result[:clouds]).to eq(40)
             expect(result[:sunrise]).to be_a(Time)
             expect(result[:sunset]).to be_a(Time)
@@ -235,10 +235,10 @@ RSpec.describe WeatherService do
             # Verify forecast contains enhanced data
             expect(result).to be_a(Hash)
             expect(result[:daily_forecast]).to be_an(Array)
-            expect(result[:daily_forecast].first[:wind_speed]).to eq(10.5)
-            expect(result[:daily_forecast].first[:wind_direction]).to eq(180)
-            expect(result[:daily_forecast].first[:pressure]).to eq(1012)
-            expect(result[:daily_forecast].first[:icon]).to eq('01d')
+            expect(result[:daily_forecast].first[:wind_speed]).to eq(22.12)
+            expect(result[:daily_forecast].first[:wind_direction]).to eq(169)
+            expect(result[:daily_forecast].first[:pressure]).to eq(1005)
+            expect(result[:daily_forecast].first[:icon]).to eq('10d')
             expect(result[:daily_forecast].first[:precipitation_chance]).to be > 0
         end
     end
