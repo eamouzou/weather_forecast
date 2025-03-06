@@ -1,108 +1,116 @@
 <!-- app/views/forecasts/_weather_data.html.erb -->
 <% if @current_weather && @forecast %>
-<div>
-  <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between">
-      <h2>Current Weather</h2>
+<div class="space-y-6 animate-fade-in">
+  <div class="bg-white shadow-xl rounded-xl overflow-hidden hover:shadow-2xl transition-shadow duration-300">
+    <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
+      <h2 class="text-2xl font-bold">Current Weather</h2>
       <% if @current_weather[:from_cache] %>
-        <span class="badge badge-info">Cached Result</span>
+        <span class="bg-blue-400 text-white px-3 py-1 rounded-full text-sm">Cached Result</span>
       <% else %>
-        <span class="badge badge-success">Fresh Data</span>
+        <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm">Fresh Data</span>
       <% end %>
     </div>
     
-    <div class="card-body">
-      <div class="mb-3">
-        <h3>Location</h3>
-        <p><%= @location[:address] %></p>
+    <div class="p-6">
+      <div class="mb-6">
+        <h3 class="text-xl font-semibold text-gray-800 mb-2">Location</h3>
+        <p class="text-gray-700"><%= @location[:address] %></p>
         <% if @location[:zip_code] %>
-          <p>ZIP: <%= @location[:zip_code] %></p>
+          <p class="text-gray-600">ZIP: <%= @location[:zip_code] %></p>
         <% end %>
       </div>
       
-      <div class="row">
-        <div class="col-md-6">
-          <div class="card bg-light">
-            <div class="card-body">
-              <h3>Temperature</h3>
-              <div class="d-flex align-items-center">
-                <span class="display-4"><%= @current_weather[:temperature]&.round || 'N/A' %>°F</span>
-                <div class="ml-4">
-                  <p>Feels like: <%= @current_weather[:feels_like]&.round || 'N/A' %>°F</p>
-                  <% if @current_weather[:temp_min] && @current_weather[:temp_max] %>
-                    <p>
-                      H: <%= @current_weather[:temp_max]&.round || 'N/A' %>°F 
-                      L: <%= @current_weather[:temp_min]&.round || 'N/A' %>°F
-                    </p>
-                  <% end %>
-                </div>
-              </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-blue-50 rounded-lg p-6">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Temperature</h3>
+          <div class="flex items-center">
+            <span class="text-5xl font-bold <%= temperature_color(@current_weather[:temperature]) %>">
+              <%= @current_weather[:temperature]&.round || 'N/A' %>°F
+            </span>
+            <div class="ml-6">
+                <p class="text-gray-700">Feels like: 
+                    <span class="<%= temperature_color(@current_weather[:feels_like]) %>">
+                        <%= @current_weather[:feels_like]&.round || 'N/A' %>°F
+                    </span>
+                </p>
+              <% if @current_weather[:temp_min] && @current_weather[:temp_max] %>
+                <p class="text-gray-700">
+                  H: <span class="<%= temperature_color(@current_weather[:temp_max]) %>">
+                    <%= @current_weather[:temp_max]&.round || 'N/A' %>°F
+                  </span>
+                  L: <span class="<%= temperature_color(@current_weather[:temp_min]) %>">
+                    <%= @current_weather[:temp_min]&.round || 'N/A' %>°F
+                  </span>
+                </p>
+              <% end %>
             </div>
           </div>
         </div>
         
-        <div class="col-md-6">
-          <div class="card bg-light">
-            <div class="card-body">
-              <h3>Conditions</h3>
-              <p class="lead text-capitalize"><%= @current_weather[:description] || 'No data available' %></p>
-              <% if @current_weather[:humidity] %>
-                <p>Humidity: <%= @current_weather[:humidity] %>%</p>
-              <% end %>
-            </div>
-          </div>
+        <div class="bg-blue-50 rounded-lg p-6">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Conditions</h3>
+          <p class="text-2xl text-gray-800 capitalize mb-2">
+            <%= @current_weather[:description] || 'No data available' %>
+          </p>
+          <% if @current_weather[:humidity] %>
+            <p class="text-gray-700">Humidity: <%= @current_weather[:humidity] %>%</p>
+          <% end %>
         </div>
       </div>
     </div>
   </div>
   
-  <div class="card">
-    <div class="card-header d-flex justify-content-between">
-      <h2>5-Day Forecast</h2>
+  <div class="bg-white shadow-xl rounded-xl overflow-hidden hover:shadow-2xl transition-shadow duration-300">
+    <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
+      <h2 class="text-2xl font-bold">5-Day Forecast</h2>
       <% if @forecast[:from_cache] %>
-        <span class="badge badge-info">Cached Result</span>
+        <span class="bg-blue-400 text-white px-3 py-1 rounded-full text-sm">Cached Result</span>
       <% else %>
-        <span class="badge badge-success">Fresh Data</span>
+        <span class="bg-green-500 text-white px-3 py-1 rounded-full text-sm">Fresh Data</span>
       <% end %>
     </div>
     
-    <div class="card-body">
+    <div class="p-6">
       <% if @forecast[:daily_forecast] && @forecast[:daily_forecast].any? %>
-        <div class="table-responsive">
-          <table class="table table-striped">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
             <thead>
-              <tr>
-                <th>Date</th>
-                <th>High</th>
-                <th>Low</th>
-                <th>Conditions</th>
-                <th>Humidity</th>
+              <tr class="bg-blue-100">
+                <th class="p-3 text-gray-700">Date</th>
+                <th class="p-3 text-gray-700">High</th>
+                <th class="p-3 text-gray-700">Low</th>
+                <th class="p-3 text-gray-700">Conditions</th>
+                <th class="p-3 text-gray-700">Humidity</th>
               </tr>
             </thead>
             <tbody>
               <% @forecast[:daily_forecast].each do |day| %>
-                <tr>
-                  <td><%= Date.parse(day[:date]).strftime("%a, %b %d") rescue day[:date] %></td>
-                  <td><%= day[:high]&.round || 'N/A' %>°F</td>
-                  <td><%= day[:low]&.round || 'N/A' %>°F</td>
-                  <td class="text-capitalize">
+                <tr class="border-b hover:bg-blue-50 transition-colors">
+                  <td class="p-3"><%= Date.parse(day[:date]).strftime("%a, %b %d") rescue day[:date] %></td>
+                  <td class="p-3 <%= temperature_color(day[:high]) %>">
+                    <%= day[:high]&.round || 'N/A' %>°F
+                  </td>
+                  <td class="p-3 <%= temperature_color(day[:low]) %>">
+                    <%= day[:low]&.round || 'N/A' %>°F
+                  </td>
+                  <td class="p-3 capitalize">
                     <%= weather_icon(day[:description]) %> 
                     <%= day[:description] || 'Unknown' %>
                   </td>
-                  <td><%= day[:humidity] || 'N/A' %>%</td>
+                  <td class="p-3"><%= day[:humidity] || 'N/A' %>%</td>
                 </tr>
               <% end %>
             </tbody>
           </table>
         </div>
       <% else %>
-        <p>No forecast data available</p>
+        <p class="text-gray-600 text-center">No forecast data available</p>
       <% end %>
     </div>
   </div>
 </div>
 <% else %>
-  <div class="alert alert-info">
+  <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg text-center">
     No weather data available. Please enter a valid location.
   </div>
 <% end %>
