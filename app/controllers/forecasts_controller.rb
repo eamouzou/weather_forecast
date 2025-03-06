@@ -1,7 +1,7 @@
 # app/controllers/forecasts_controller.rb
 class ForecastsController < ApplicationController
   before_action :initialize_weather_data
-  
+
   def index
     fetch_weather_data if params[:address].present?
   end
@@ -46,35 +46,35 @@ class ForecastsController < ApplicationController
 
   def fetch_weather_data
     @location[:address] = @address
-    
+
     coordinates = get_coordinates(@address)
     fetch_weather_for_coordinates(coordinates)
     add_location_details(coordinates)
   rescue StandardError => e
     handle_error(e)
   end
-  
+
   def get_coordinates(address)
     AddressParser.new.parse(address)
   end
-  
+
   def fetch_weather_for_coordinates(coordinates)
     weather_service = WeatherService.new
     @current_weather = weather_service.get_current_temperature(
-      lat: coordinates[:lat], 
+      lat: coordinates[:lat],
       lon: coordinates[:lon]
     )
-    
+
     @forecast = weather_service.get_forecast(
-      lat: coordinates[:lat], 
+      lat: coordinates[:lat],
       lon: coordinates[:lon]
     )
   end
-  
+
   def add_location_details(coordinates)
     @location[:zip_code] = coordinates[:zip_code] if coordinates[:zip_code]
   end
-  
+
   def handle_error(exception)
     flash[:error] = "Error retrieving weather data: #{exception.message}"
     redirect_to root_path

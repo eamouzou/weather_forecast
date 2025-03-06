@@ -60,7 +60,7 @@ Rails.application.configure do
 
   # Enable fragment and page caching in development
   config.action_controller.perform_caching = true
-  
+
   # Use memory store for caching in development
   config.cache_store = :memory_store, { size: 64.megabytes }
 end

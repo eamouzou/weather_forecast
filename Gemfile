@@ -44,23 +44,22 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 
   # API calls
-  gem 'httparty'
+  gem "httparty"
 
   # Environment variables
-  gem 'dotenv-rails', groups: [:development, :test]
+  gem "dotenv-rails", groups: [ :development, :test ]
 
   # Testing and Debugging
-  gem 'rspec-rails'
-  gem 'webmock'
-  gem 'vcr'
-  gem 'pry'
-  gem 'pry-rails'
-  gem 'rails-controller-testing'
-  gem 'capybara'
+  gem "rspec-rails"
+  gem "webmock"
+  gem "vcr"
+  gem "pry"
+  gem "pry-rails"
+  gem "rails-controller-testing"
+  gem "capybara"
 end
 
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 end
-
