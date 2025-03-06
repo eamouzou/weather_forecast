@@ -1,18 +1,26 @@
-Rails.application.routes.draw do
-  # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
+require "sidekiq/web"
 
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
+Rails.application.routes.draw do
+  # Health check
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
-  # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
-  # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
-
-  # Defines the root path route ("/")
-  # root "posts#index"
+  # Root path
   root "forecasts#index"
 
+  # Forecast routes
   get "forecast", to: "forecasts#show"
   resources :forecasts, only: [ :index, :create, :show ]
+
+  # Sidekiq Web UI
+  if Rails.env.production?
+    # Secure Sidekiq in production with basic auth
+    Sidekiq::Web.use Rack::Auth::Basic do |username, password|
+      # Replace with a secure authentication check
+      ActiveSupport::SecurityUtils.secure_compare(username, ENV["SIDEKIQ_USERNAME"]) &&
+      ActiveSupport::SecurityUtils.secure_compare(password, ENV["SIDEKIQ_PASSWORD"])
+    end
+  end
+
+  # Mount Sidekiq Web UI
+  mount Sidekiq::Web => "/sidekiq"
 end
