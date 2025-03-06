@@ -50,10 +50,61 @@
         <div class="bg-blue-50 rounded-lg p-6">
           <h3 class="text-xl font-semibold text-gray-800 mb-4">Conditions</h3>
           <p class="text-2xl text-gray-800 capitalize mb-2">
+            <span class="text-3xl mr-2"><%= weather_icon(@current_weather[:description]) %></span>
             <%= @current_weather[:description] || 'No data available' %>
           </p>
           <% if @current_weather[:humidity] %>
             <p class="text-gray-700">Humidity: <%= @current_weather[:humidity] %>%</p>
+          <% end %>
+          <% if @current_weather[:precipitation_chance] && @current_weather[:precipitation_chance] > 0 %>
+            <p class="text-gray-700 mt-1">Precipitation: <%= precipitation_badge(@current_weather[:precipitation_chance]) %></p>
+          <% end %>
+        </div>
+      </div>
+      
+      <!-- Additional Weather Details -->
+      <div class="mt-6 grid md:grid-cols-2 gap-6">
+        <div class="bg-blue-50 rounded-lg p-6">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Wind & Pressure</h3>
+          <% if @current_weather[:wind_speed] %>
+            <p class="text-gray-700">
+              Wind: <%= @current_weather[:wind_speed].round(1) %> mph, <%= wind_direction_text(@current_weather[:wind_direction]) %>
+              <span class="block text-sm text-gray-600 mt-1"><%= wind_speed_text(@current_weather[:wind_speed]) %></span>
+            </p>
+          <% end %>
+          
+          <% if @current_weather[:pressure] %>
+            <p class="text-gray-700 mt-3">
+              <%= pressure_text(@current_weather[:pressure]) %>
+            </p>
+          <% end %>
+          
+          <% if @current_weather[:visibility] %>
+            <p class="text-gray-700 mt-3">
+              Visibility: <%= (@current_weather[:visibility] / 1609.0).round(1) %> miles
+            </p>
+          <% end %>
+        </div>
+        
+        <div class="bg-blue-50 rounded-lg p-6">
+          <h3 class="text-xl font-semibold text-gray-800 mb-4">Sun & Clouds</h3>
+          <% if @current_weather[:sunrise] && @current_weather[:sunset] %>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <p class="text-gray-700">Sunrise</p>
+                <p class="text-lg font-semibold"><%= format_time(@current_weather[:sunrise]) %></p>
+              </div>
+              <div>
+                <p class="text-gray-700">Sunset</p>
+                <p class="text-lg font-semibold"><%= format_time(@current_weather[:sunset]) %></p>
+              </div>
+            </div>
+          <% end %>
+          
+          <% if @current_weather[:clouds] %>
+            <p class="text-gray-700 mt-3">
+              Cloud cover: <%= @current_weather[:clouds] %>%
+            </p>
           <% end %>
         </div>
       </div>
@@ -77,31 +128,61 @@
             <thead>
               <tr class="bg-blue-100">
                 <th class="p-3 text-gray-700">Date</th>
-                <th class="p-3 text-gray-700">High</th>
-                <th class="p-3 text-gray-700">Low</th>
+                <th class="p-3 text-gray-700">High/Low</th>
                 <th class="p-3 text-gray-700">Conditions</th>
-                <th class="p-3 text-gray-700">Humidity</th>
+                <th class="p-3 text-gray-700">Precipitation</th>
+                <th class="p-3 text-gray-700">Wind</th>
               </tr>
             </thead>
             <tbody>
               <% @forecast[:daily_forecast].each do |day| %>
                 <tr class="border-b hover:bg-blue-50 transition-colors">
-                  <td class="p-3"><%= Date.parse(day[:date]).strftime("%a, %b %d") rescue day[:date] %></td>
-                  <td class="p-3 <%= temperature_color(day[:high]) %>">
-                    <%= day[:high]&.round || 'N/A' %>°F
-                  </td>
-                  <td class="p-3 <%= temperature_color(day[:low]) %>">
-                    <%= day[:low]&.round || 'N/A' %>°F
+                  <td class="p-3 font-medium"><%= Date.parse(day[:date]).strftime("%a, %b %d") rescue day[:date] %></td>
+                  <td class="p-3">
+                    <span class="<%= temperature_color(day[:high]) %>"><%= day[:high]&.round || 'N/A' %>°</span> /
+                    <span class="<%= temperature_color(day[:low]) %>"><%= day[:low]&.round || 'N/A' %>°</span>
                   </td>
                   <td class="p-3 capitalize">
-                    <%= weather_icon(day[:description]) %> 
-                    <%= day[:description] || 'Unknown' %>
+                    <span class="text-2xl"><%= weather_icon(day[:description]) %></span>
+                    <span class="ml-2"><%= day[:description] || 'Unknown' %></span>
+                    <div class="text-sm text-gray-600 mt-1">Humidity: <%= day[:humidity] || 'N/A' %>%</div>
                   </td>
-                  <td class="p-3"><%= day[:humidity] || 'N/A' %>%</td>
+                  <td class="p-3">
+                    <%= precipitation_badge(day[:precipitation_chance]) %>
+                  </td>
+                  <td class="p-3">
+                    <div><%= day[:wind_speed]&.round(1) || 'N/A' %> mph</div>
+                    <div class="text-sm text-gray-600"><%= wind_direction_text(day[:wind_direction]) %></div>
+                  </td>
                 </tr>
               <% end %>
             </tbody>
           </table>
+        </div>
+        
+        <!-- Mobile-friendly cards for small screens -->
+        <div class="md:hidden space-y-4 mt-4">
+          <% @forecast[:daily_forecast].each do |day| %>
+            <div class="bg-blue-50 rounded-lg p-4 shadow">
+              <div class="flex justify-between items-center">
+                <h3 class="font-bold"><%= Date.parse(day[:date]).strftime("%a, %b %d") rescue day[:date] %></h3>
+                <div>
+                  <span class="<%= temperature_color(day[:high]) %>"><%= day[:high]&.round || 'N/A' %>°</span> /
+                  <span class="<%= temperature_color(day[:low]) %>"><%= day[:low]&.round || 'N/A' %>°</span>
+                </div>
+              </div>
+              <div class="flex items-center mt-2">
+                <span class="text-3xl mr-2"><%= weather_icon(day[:description]) %></span>
+                <span class="capitalize"><%= day[:description] || 'Unknown' %></span>
+              </div>
+              <div class="grid grid-cols-2 gap-2 mt-3 text-sm">
+                <div>Humidity: <%= day[:humidity] || 'N/A' %>%</div>
+                <div>Wind: <%= day[:wind_speed]&.round(1) || 'N/A' %> mph</div>
+                <div><%= precipitation_badge(day[:precipitation_chance]) %></div>
+                <div class="text-gray-600"><%= wind_direction_text(day[:wind_direction]) %></div>
+              </div>
+            </div>
+          <% end %>
         </div>
       <% else %>
         <p class="text-gray-600 text-center">No forecast data available</p>
