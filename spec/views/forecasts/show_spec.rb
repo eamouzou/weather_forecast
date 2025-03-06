@@ -44,7 +44,7 @@ RSpec.describe "forecasts/show", type: :view do
         it "displays error messages" do
             render
 
-            expect(rendered).to have_selector('.alert.alert-danger')
+            expect(rendered).to have_selector('.bg-red-100.border.border-red-400')
             expect(rendered).to have_content('Error retrieving weather data')
         end
     end
