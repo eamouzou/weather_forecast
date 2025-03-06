@@ -15,4 +15,5 @@ Rails.application.routes.draw do
 
   get "forecast", to: "forecasts#show"
   resources :forecasts, only: [ :index, :create, :show ]
+  get 'test_redis', to: 'forecasts#test_redis'
 end

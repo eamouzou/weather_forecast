@@ -2,6 +2,22 @@
 class ForecastsController < ApplicationController
   before_action :initialize_weather_data
 
+  def test_redis
+    cache_key = "test_key_#{Time.now.to_i}"
+    cache_value = "Test value: #{Time.now}"
+    
+    Rails.cache.write(cache_key, cache_value, expires_in: 1.minute)
+    @cached_value = Rails.cache.read(cache_key)
+    
+    # Test direct Redis access
+    with_redis do |redis|
+      redis.set("direct_test_key", "Direct Redis test: #{Time.now}")
+      @direct_value = redis.get("direct_test_key")
+    end
+    
+    render plain: "Cache Test: #{@cached_value}\nDirect Test: #{@direct_value}"
+  end
+
   def index
     # Get recent locations from cookies
     @recent_locations = get_recent_locations
