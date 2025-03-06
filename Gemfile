@@ -55,6 +55,8 @@ group :development, :test do
   gem 'vcr'
   gem 'pry'
   gem 'pry-rails'
+  gem 'rails-controller-testing'
+  gem 'capybara'
 end
 
 group :development do
