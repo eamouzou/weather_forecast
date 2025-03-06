@@ -1,27 +1,10 @@
 # app/controllers/forecasts_controller.rb
+
 class ForecastsController < ApplicationController
   before_action :initialize_weather_data
 
-  def test_redis
-    cache_key = "test_key_#{Time.now.to_i}"
-    cache_value = "Test value: #{Time.now}"
-    
-    Rails.cache.write(cache_key, cache_value, expires_in: 1.minute)
-    @cached_value = Rails.cache.read(cache_key)
-    
-    # Test direct Redis access
-    with_redis do |redis|
-      redis.set("direct_test_key", "Direct Redis test: #{Time.now}")
-      @direct_value = redis.get("direct_test_key")
-    end
-    
-    render plain: "Cache Test: #{@cached_value}\nDirect Test: #{@direct_value}"
-  end
-
   def index
-    # Get recent locations from cookies
     @recent_locations = get_recent_locations
-
     fetch_weather_data if params[:address].present?
   end
 
@@ -30,11 +13,13 @@ class ForecastsController < ApplicationController
     @recent_locations = get_recent_locations
 
     if @address.present?
-      fetch_weather_data
-      add_to_recent_locations(@address) if @current_weather && !@current_weather[:error]
+      begin
+        fetch_weather_data
+        add_to_recent_locations(@address) if @current_weather && !@current_weather[:error]
+      rescue StandardError => e
+        handle_error(e)
+      end
     end
-  rescue StandardError => e
-    handle_error(e)
   end
 
   def create
@@ -72,7 +57,20 @@ class ForecastsController < ApplicationController
     @location[:address] = @address
 
     coordinates = get_coordinates(@address)
-    fetch_weather_for_coordinates(coordinates)
+    weather_service = WeatherService.new
+
+    # Attempt to fetch from cache first
+    @current_weather = weather_service.get_current_temperature(
+      lat: coordinates[:lat],
+      lon: coordinates[:lon]
+    ) || default_current_weather
+
+    @forecast = weather_service.get_forecast(
+      lat: coordinates[:lat],
+      lon: coordinates[:lon]
+    ) || default_forecast
+
+    # Add location details
     add_location_details(coordinates)
     add_to_recent_locations(@address)
   rescue StandardError => e
