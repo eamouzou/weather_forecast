@@ -103,28 +103,28 @@ RSpec.describe WeatherService do
 
             # Use a complete mock response
             mock_response = {
-                'main' => {
-                    'temp' => 72.5,
-                    'feels_like' => 70.1,
-                    'temp_min' => 68.0,
-                    'temp_max' => 75.0,
-                    'humidity' => 65,
-                    'pressure' => 1015
-                },
-                'weather' => [ {
-                    'description' => 'clear',
-                    'icon' => '01d'
-                } ],
-                'wind' => {
-                    'speed' => 5.0,
-                    'deg' => 180
-                },
-                'visibility' => 10000,
-                'clouds' => { 'all' => 10 },
-                'sys' => {
-                    'sunrise' => Time.now.to_i,
-                    'sunset' => Time.now.to_i + 43200
-                }
+              'main' => {
+                'temp' => 72.5,
+                'feels_like' => 70.1,
+                'temp_min' => 68.0,
+                'temp_max' => 75.0,
+                'humidity' => 65,
+                'pressure' => 1015
+              },
+              'weather' => [ {
+                'description' => 'clear',
+                'icon' => '01d'
+              } ],
+              'wind' => {
+                'speed' => 5.0,
+                'deg' => 180
+              },
+              'visibility' => 10000,
+              'clouds' => { 'all' => 10 },
+              'sys' => {
+                'sunrise' => Time.now.to_i,
+                'sunset' => Time.now.to_i + 43200
+              }
             }
 
             allow(service).to receive(:make_api_request).and_return(mock_response)
@@ -134,11 +134,11 @@ RSpec.describe WeatherService do
             service.get_current_temperature(lat: 40.7128, lon: -74.0060)
 
             expect(Rails.cache).to have_received(:write).with(
-                "weather_40.7128_-74.006",
-                anything,
-                expires_in: 30.minutes
+              "current_weather_40.7128_-74.006",
+              anything,
+              expires_in: 30.minutes
             )
-        end
+          end
     end
 
 
