@@ -27,4 +27,22 @@ RSpec.describe WeatherHelper, type: :helper do
       expect(helper.weather_icon('unknown')).to eq('🌤️')
     end
   end
+
+  describe '#temperature_color' do
+    it 'returns blue for very cold temperatures' do
+      expect(helper.temperature_color(20)).to eq('text-blue-600')
+    end
+
+    it 'returns green for mild temperatures' do
+      expect(helper.temperature_color(70)).to eq('text-green-400')
+    end
+
+    it 'returns red for very hot temperatures' do
+      expect(helper.temperature_color(100)).to eq('text-red-600')
+    end
+
+    it 'returns primary for nil temperatures' do
+      expect(helper.temperature_color(nil)).to eq('text-primary')
+    end
+  end
 end
