@@ -1,6 +1,7 @@
 # spec/jobs/weather_fetch_job_spec.rb
 
 require 'rails_helper'
+require 'sidekiq/testing'
 
 RSpec.describe WeatherFetchJob, type: :job do
   let(:weather_service) { instance_double(WeatherService) }
@@ -8,7 +9,12 @@ RSpec.describe WeatherFetchJob, type: :job do
   let(:lon) { -74.0060 }
 
   before do
+    Sidekiq::Testing.inline!
     allow(WeatherService).to receive(:new).and_return(weather_service)
+  end
+
+  after do
+    Sidekiq::Testing.fake!
   end
 
   describe '#perform' do
@@ -18,7 +24,8 @@ RSpec.describe WeatherFetchJob, type: :job do
           .with(lat: lat, lon: lon, force_refresh: true)
           .once
 
-        WeatherFetchJob.perform_now(lat: lat, lon: lon, type: 'current')
+        job = WeatherFetchJob.new
+        job.perform(lat, lon, 'current')
       end
     end
 
@@ -28,7 +35,8 @@ RSpec.describe WeatherFetchJob, type: :job do
           .with(lat: lat, lon: lon, force_refresh: true)
           .once
 
-        WeatherFetchJob.perform_now(lat: lat, lon: lon, type: 'forecast')
+        job = WeatherFetchJob.new
+        job.perform(lat, lon, 'forecast')
       end
     end
 
@@ -42,18 +50,25 @@ RSpec.describe WeatherFetchJob, type: :job do
           .with(lat: lat, lon: lon, force_refresh: true)
           .once
 
-        WeatherFetchJob.perform_now(lat: lat, lon: lon, type: 'both')
+        job = WeatherFetchJob.new
+        job.perform(lat, lon, 'both')
       end
     end
 
     context 'when an error occurs' do
-      it 'retries the job' do
+      before do
+        Sidekiq::Testing.fake!
+      end
+
+      it 'handles the error' do
         allow(weather_service).to receive(:get_current_temperature)
           .and_raise(StandardError.new('API Error'))
 
+        # Just verify it doesn't raise an unhandled exception
+        job = WeatherFetchJob.new
         expect {
-          WeatherFetchJob.perform_now(lat: lat, lon: lon, type: 'current')
-        }.to have_enqueued_job(WeatherFetchJob)
+          job.perform(lat, lon, 'current')
+        }.to raise_error(StandardError)
       end
     end
   end

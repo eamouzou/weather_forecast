@@ -29,7 +29,7 @@ class ForecastsController < ApplicationController
           Rails.logger.info "Scheduled background refresh for (#{coordinates[:lat]}, #{coordinates[:lon]})"
         end
       rescue StandardError => e
-        handle_error(e)
+        return handle_error(e)
       end
     end
   end
@@ -102,7 +102,8 @@ class ForecastsController < ApplicationController
     add_location_details(coordinates)
     add_to_recent_locations(@address)
   rescue StandardError => e
-    handle_error(e)
+    # Return the result of handle_error to stop execution
+    return handle_error(e)
   end
 
   def get_recent_locations
