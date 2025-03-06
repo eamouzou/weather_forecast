@@ -56,10 +56,30 @@ RSpec.describe WeatherService do
         it 'returns cached results for the same coordinates' do
             service = WeatherService.new
 
-            # Mock the API response
+            # Mock the API response with the full data structure
             mock_weather_data = {
-                'main' => { 'temp' => 72.5, 'feels_like' => 70.1, 'temp_min' => 68.0, 'temp_max' => 75.0, 'humidity' => 65 },
-                'weather' => [ { 'description' => 'partly cloudy' } ]
+                'main' => { 
+                    'temp' => 72.5, 
+                    'feels_like' => 70.1, 
+                    'temp_min' => 68.0, 
+                    'temp_max' => 75.0, 
+                    'humidity' => 65,
+                    'pressure' => 1015
+                },
+                'weather' => [{ 
+                    'description' => 'partly cloudy',
+                    'icon' => '02d'
+                }],
+                'wind' => {
+                    'speed' => 5.0,
+                    'deg' => 180
+                },
+                'visibility' => 10000,
+                'clouds' => { 'all' => 40 },
+                'sys' => {
+                    'sunrise' => Time.now.to_i,
+                    'sunset' => Time.now.to_i + 43200
+                }
             }
 
             # First call - simulate API request
@@ -81,9 +101,33 @@ RSpec.describe WeatherService do
         it 'respects the cache expiration time' do
             service = WeatherService.new
 
-            allow(service).to receive(:make_api_request).and_return(
-                { 'main' => { 'temp' => 72.5 }, 'weather' => [ { 'description' => 'clear' } ] }
-            )
+            # Use a complete mock response
+            mock_response = {
+                'main' => {
+                    'temp' => 72.5,
+                    'feels_like' => 70.1,
+                    'temp_min' => 68.0,
+                    'temp_max' => 75.0,
+                    'humidity' => 65,
+                    'pressure' => 1015
+                },
+                'weather' => [{ 
+                    'description' => 'clear',
+                    'icon' => '01d'
+                }],
+                'wind' => {
+                    'speed' => 5.0,
+                    'deg' => 180
+                },
+                'visibility' => 10000,
+                'clouds' => { 'all' => 10 },
+                'sys' => {
+                    'sunrise' => Time.now.to_i,
+                    'sunset' => Time.now.to_i + 43200
+                }
+            }
+            
+            allow(service).to receive(:make_api_request).and_return(mock_response)
             allow(Rails.cache).to receive(:read).and_return(nil)
             allow(Rails.cache).to receive(:write)
 
@@ -94,6 +138,126 @@ RSpec.describe WeatherService do
                 anything,
                 expires_in: 30.minutes
             )
+        end
+    end
+
+
+    describe '#get_current_temperature with extended data' do
+        it 'fetches and processes additional weather data' do
+            service = WeatherService.new
+            
+            # Create a mock API response with extended data
+            mock_response = {
+                'main' => {
+                    'temp' => 72.5,
+                    'feels_like' => 70.1,
+                    'temp_min' => 68.0,
+                    'temp_max' => 75.0,
+                    'humidity' => 65,
+                    'pressure' => 1015
+                },
+                'weather' => [
+                    {
+                        'description' => 'partly cloudy',
+                        'icon' => '02d'
+                    }
+                ],
+                'wind' => {
+                    'speed' => 8.5,
+                    'deg' => 270
+                },
+                'visibility' => 10000,
+                'clouds' => {
+                    'all' => 40
+                },
+                'sys' => {
+                    'sunrise' => Time.now.to_i - 3600,
+                    'sunset' => Time.now.to_i + 10800
+                }
+            }
+            
+            allow(service).to receive(:make_api_request).and_return(mock_response)
+            
+            result = service.get_current_temperature(lat: 40.7128, lon: -74.0060)
+            
+            # Verify all new fields are present
+            expect(result).to be_a(Hash)
+            expect(result[:wind_speed]).to eq(8.5)
+            expect(result[:wind_direction]).to eq(270)
+            expect(result[:pressure]).to eq(1015)
+            expect(result[:visibility]).to eq(10000)
+            expect(result[:icon]).to eq('02d')
+            expect(result[:clouds]).to eq(40)
+            expect(result[:sunrise]).to be_a(Time)
+            expect(result[:sunset]).to be_a(Time)
+        end
+    end
+  
+    describe '#get_forecast with extended data' do
+        it 'properly processes enhanced forecast data' do
+            service = WeatherService.new
+            
+            # Create a mock forecast API response
+            mock_entry = {
+                'dt_txt' => '2025-03-05 12:00:00',
+                'main' => {
+                    'temp_min' => 65.0,
+                    'temp_max' => 75.0,
+                    'humidity' => 60,
+                    'pressure' => 1012
+                },
+                'weather' => [
+                    {
+                        'description' => 'sunny',
+                        'icon' => '01d'
+                    }
+                ],
+                'wind' => {
+                    'speed' => 10.5,
+                    'deg' => 180
+                },
+                'clouds' => {
+                    'all' => 10
+                },
+                'rain' => {
+                    '3h' => 0.5
+                }
+            }
+            
+            mock_response = {
+                'list' => [mock_entry]
+            }
+            
+            allow(service).to receive(:make_api_request).and_return(mock_response)
+            
+            result = service.get_forecast(lat: 40.7128, lon: -74.0060)
+            
+            # Verify forecast contains enhanced data
+            expect(result).to be_a(Hash)
+            expect(result[:daily_forecast]).to be_an(Array)
+            expect(result[:daily_forecast].first[:wind_speed]).to eq(10.5)
+            expect(result[:daily_forecast].first[:wind_direction]).to eq(180)
+            expect(result[:daily_forecast].first[:pressure]).to eq(1012)
+            expect(result[:daily_forecast].first[:icon]).to eq('01d')
+            expect(result[:daily_forecast].first[:precipitation_chance]).to be > 0
+        end
+    end
+  
+    describe '#calculate_precipitation_chance' do
+        it 'calculates precipitation chance correctly' do
+            service = WeatherService.new
+            
+            # Create mock entries with and without rain
+            rainy_entry = { 'rain' => { '3h' => 0.5 } }
+            dry_entry = {}
+            
+            # Test with 2/4 entries having rain (50%)
+            entries = [rainy_entry, dry_entry, rainy_entry, dry_entry]
+            
+            # Call the private method
+            result = service.send(:calculate_precipitation_chance, entries)
+            
+            expect(result).to eq(50)
         end
     end
 end
