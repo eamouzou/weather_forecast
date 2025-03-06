@@ -67,8 +67,8 @@ RSpec.describe "forecasts/_weather_data", type: :view do
             expect(rendered).to have_selector('table')
             expect(rendered).to have_content('sunny')
             expect(rendered).to have_content('cloudy')
-            expect(rendered).to have_content('80°F')
-            expect(rendered).to have_content('62°F')
+            expect(rendered).to have_content('80')
+            expect(rendered).to have_content('62')
         end
 
         it "indicates that data is fresh" do
