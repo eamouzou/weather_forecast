@@ -16,6 +16,18 @@ class ForecastsController < ApplicationController
       begin
         fetch_weather_data
         add_to_recent_locations(@address) if @current_weather && !@current_weather[:error]
+
+        # Schedule background refresh if we have valid weather data
+        if @current_weather && @forecast
+          coordinates = get_coordinates(@address)
+          # Simply pass the parameters directly
+          WeatherFetchJob.perform_async(
+            coordinates[:lat],
+            coordinates[:lon],
+            "both"
+          )
+          Rails.logger.info "Scheduled background refresh for (#{coordinates[:lat]}, #{coordinates[:lon]})"
+        end
       rescue StandardError => e
         handle_error(e)
       end
@@ -24,6 +36,22 @@ class ForecastsController < ApplicationController
 
   def create
     redirect_to forecast_path(address: params[:address])
+  end
+
+  def test_redis
+    cache_key = "test_key_#{Time.now.to_i}"
+    cache_value = "Test value: #{Time.now}"
+
+    Rails.cache.write(cache_key, cache_value, expires_in: 1.minute)
+    @cached_value = Rails.cache.read(cache_key)
+
+    # Test direct Redis access
+    with_redis do |redis|
+      redis.set("direct_test_key", "Direct Redis test: #{Time.now}")
+      @direct_value = redis.get("direct_test_key")
+    end
+
+    render plain: "Cache Test: #{@cached_value}\nDirect Test: #{@direct_value}"
   end
 
   private
@@ -130,6 +158,9 @@ class ForecastsController < ApplicationController
 
   def add_location_details(coordinates)
     @location[:zip_code] = coordinates[:zip_code] if coordinates[:zip_code]
+    # Store coordinates for background job use
+    @location[:lat] = coordinates[:lat]
+    @location[:lon] = coordinates[:lon]
   end
 
   def handle_error(exception)
