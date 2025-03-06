@@ -58,18 +58,18 @@ RSpec.describe WeatherService do
 
             # Mock the API response with the full data structure
             mock_weather_data = {
-                'main' => { 
-                    'temp' => 72.5, 
-                    'feels_like' => 70.1, 
-                    'temp_min' => 68.0, 
-                    'temp_max' => 75.0, 
+                'main' => {
+                    'temp' => 72.5,
+                    'feels_like' => 70.1,
+                    'temp_min' => 68.0,
+                    'temp_max' => 75.0,
                     'humidity' => 65,
                     'pressure' => 1015
                 },
-                'weather' => [{ 
+                'weather' => [ {
                     'description' => 'partly cloudy',
                     'icon' => '02d'
-                }],
+                } ],
                 'wind' => {
                     'speed' => 5.0,
                     'deg' => 180
@@ -111,10 +111,10 @@ RSpec.describe WeatherService do
                     'humidity' => 65,
                     'pressure' => 1015
                 },
-                'weather' => [{ 
+                'weather' => [ {
                     'description' => 'clear',
                     'icon' => '01d'
-                }],
+                } ],
                 'wind' => {
                     'speed' => 5.0,
                     'deg' => 180
@@ -126,7 +126,7 @@ RSpec.describe WeatherService do
                     'sunset' => Time.now.to_i + 43200
                 }
             }
-            
+
             allow(service).to receive(:make_api_request).and_return(mock_response)
             allow(Rails.cache).to receive(:read).and_return(nil)
             allow(Rails.cache).to receive(:write)
@@ -145,7 +145,7 @@ RSpec.describe WeatherService do
     describe '#get_current_temperature with extended data' do
         it 'fetches and processes additional weather data' do
             service = WeatherService.new
-            
+
             # Create a mock API response with extended data
             mock_response = {
                 'main' => {
@@ -175,11 +175,11 @@ RSpec.describe WeatherService do
                     'sunset' => Time.now.to_i + 10800
                 }
             }
-            
+
             allow(service).to receive(:make_api_request).and_return(mock_response)
-            
+
             result = service.get_current_temperature(lat: 40.7128, lon: -74.0060)
-            
+
             # Verify all new fields are present
             expect(result).to be_a(Hash)
             expect(result[:wind_speed]).to eq(8.5)
@@ -192,11 +192,11 @@ RSpec.describe WeatherService do
             expect(result[:sunset]).to be_a(Time)
         end
     end
-  
+
     describe '#get_forecast with extended data' do
         it 'properly processes enhanced forecast data' do
             service = WeatherService.new
-            
+
             # Create a mock forecast API response
             mock_entry = {
                 'dt_txt' => '2025-03-05 12:00:00',
@@ -223,15 +223,15 @@ RSpec.describe WeatherService do
                     '3h' => 0.5
                 }
             }
-            
+
             mock_response = {
-                'list' => [mock_entry]
+                'list' => [ mock_entry ]
             }
-            
+
             allow(service).to receive(:make_api_request).and_return(mock_response)
-            
+
             result = service.get_forecast(lat: 40.7128, lon: -74.0060)
-            
+
             # Verify forecast contains enhanced data
             expect(result).to be_a(Hash)
             expect(result[:daily_forecast]).to be_an(Array)
@@ -242,21 +242,21 @@ RSpec.describe WeatherService do
             expect(result[:daily_forecast].first[:precipitation_chance]).to be > 0
         end
     end
-  
+
     describe '#calculate_precipitation_chance' do
         it 'calculates precipitation chance correctly' do
             service = WeatherService.new
-            
+
             # Create mock entries with and without rain
             rainy_entry = { 'rain' => { '3h' => 0.5 } }
             dry_entry = {}
-            
+
             # Test with 2/4 entries having rain (50%)
-            entries = [rainy_entry, dry_entry, rainy_entry, dry_entry]
-            
+            entries = [ rainy_entry, dry_entry, rainy_entry, dry_entry ]
+
             # Call the private method
             result = service.send(:calculate_precipitation_chance, entries)
-            
+
             expect(result).to eq(50)
         end
     end

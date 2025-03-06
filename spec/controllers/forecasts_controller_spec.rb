@@ -182,39 +182,39 @@ RSpec.describe ForecastsController, type: :controller do
     describe "recent locations tracking" do
         it "saves locations to cookies" do
           get :show, params: { address: 'New York' }
-          
+
           cookie_value = cookies[:recent_locations]
           expect(cookie_value).not_to be_nil
-          
+
           locations = JSON.parse(cookie_value)
           expect(locations).to include('New York')
         end
-        
+
         it "displays recent locations on index page" do
-          allow(controller).to receive(:get_recent_locations).and_return(['Chicago', 'New York'])
-          
+          allow(controller).to receive(:get_recent_locations).and_return([ 'Chicago', 'New York' ])
+
           get :index
-          
-          expect(assigns(:recent_locations)).to eq(['Chicago', 'New York'])
+
+          expect(assigns(:recent_locations)).to eq([ 'Chicago', 'New York' ])
           expect(response.body).to include('Recent Searches')
         end
-        
+
         it "limits to 5 recent locations" do
           # Create 6 locations
           locations = (1..6).map { |i| "City #{i}" }
-          
+
           # Simulate 6 lookups
           locations.each do |city|
             allow(AddressParser).to receive(:new).and_return(double(parse: { lat: 40.7, lon: -74.0 }))
             allow_any_instance_of(WeatherService).to receive(:get_current_temperature).and_return({})
             allow_any_instance_of(WeatherService).to receive(:get_forecast).and_return({})
-            
+
             get :show, params: { address: city }
           end
-          
+
           cookie_value = cookies[:recent_locations]
           locations = JSON.parse(cookie_value)
-          
+
           expect(locations.length).to eq(5)
           expect(locations.first).to eq('City 6') # Most recent should be first
           expect(locations).not_to include('City 1') # Oldest should be removed

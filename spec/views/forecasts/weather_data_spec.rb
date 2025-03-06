@@ -40,7 +40,7 @@ RSpec.describe "forecasts/_weather_data", type: :view do
 
         it "displays current temperature information" do
             render partial: 'forecasts/weather_data'
-          
+
             expect(rendered).to match(/76°F/)
             expect(rendered).to match(/78°F/)
             expect(rendered).to match(/70°F/)

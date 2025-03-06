@@ -1,18 +1,18 @@
 # app/controllers/forecasts_controller.rb
 class ForecastsController < ApplicationController
   before_action :initialize_weather_data
-  
+
   def index
     # Get recent locations from cookies
     @recent_locations = get_recent_locations
-    
+
     fetch_weather_data if params[:address].present?
   end
 
   def show
     @address = params[:address] || params[:id]
     @recent_locations = get_recent_locations
-    
+
     if @address.present?
       fetch_weather_data
       add_to_recent_locations(@address) if @current_weather && !@current_weather[:error]
@@ -65,34 +65,34 @@ class ForecastsController < ApplicationController
 
   def get_recent_locations
     return [] unless cookies[:recent_locations]
-    
+
     begin
       JSON.parse(cookies[:recent_locations]) || []
     rescue
       []
     end
   end
-  
+
   def add_to_recent_locations(address)
     return if address.blank?
-    
+
     recent = get_recent_locations
-    
+
     # Remove the location if it already exists (to move it to the front)
     recent.delete(address)
-    
+
     # Add to the beginning of the array
     recent.unshift(address)
-    
+
     # Keep only the last 5 locations
     recent = recent.take(5)
-    
+
     # Store in cookies for 3 months
     cookies[:recent_locations] = {
       value: recent.to_json,
       expires: 3.months.from_now
     }
-    
+
     # Update the instance variable
     @recent_locations = recent
   end
