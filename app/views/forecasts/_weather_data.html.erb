@@ -1,0 +1,105 @@
+<!-- app/views/forecasts/_weather_data.html.erb -->
+<% if @current_weather && @forecast %>
+<div>
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between">
+      <h2>Current Weather</h2>
+      <% if @current_weather[:from_cache] %>
+        <span class="badge badge-info">Cached Result</span>
+      <% else %>
+        <span class="badge badge-success">Fresh Data</span>
+      <% end %>
+    </div>
+    
+    <div class="card-body">
+      <div class="mb-3">
+        <h3>Location</h3>
+        <p><%= @location[:address] %></p>
+        <% if @location[:zip_code] %>
+          <p>ZIP: <%= @location[:zip_code] %></p>
+        <% end %>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card bg-light">
+            <div class="card-body">
+              <h3>Temperature</h3>
+              <div class="d-flex align-items-center">
+                <span class="display-4"><%= @current_weather[:temperature]&.round || 'N/A' %>°F</span>
+                <div class="ml-4">
+                  <p>Feels like: <%= @current_weather[:feels_like]&.round || 'N/A' %>°F</p>
+                  <% if @current_weather[:temp_min] && @current_weather[:temp_max] %>
+                    <p>
+                      H: <%= @current_weather[:temp_max]&.round || 'N/A' %>°F 
+                      L: <%= @current_weather[:temp_min]&.round || 'N/A' %>°F
+                    </p>
+                  <% end %>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="card bg-light">
+            <div class="card-body">
+              <h3>Conditions</h3>
+              <p class="lead text-capitalize"><%= @current_weather[:description] || 'No data available' %></p>
+              <% if @current_weather[:humidity] %>
+                <p>Humidity: <%= @current_weather[:humidity] %>%</p>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="card">
+    <div class="card-header d-flex justify-content-between">
+      <h2>5-Day Forecast</h2>
+      <% if @forecast[:from_cache] %>
+        <span class="badge badge-info">Cached Result</span>
+      <% else %>
+        <span class="badge badge-success">Fresh Data</span>
+      <% end %>
+    </div>
+    
+    <div class="card-body">
+      <% if @forecast[:daily_forecast] && @forecast[:daily_forecast].any? %>
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>High</th>
+                <th>Low</th>
+                <th>Conditions</th>
+                <th>Humidity</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @forecast[:daily_forecast].each do |day| %>
+                <tr>
+                  <td><%= Date.parse(day[:date]).strftime("%a, %b %d") rescue day[:date] %></td>
+                  <td><%= day[:high]&.round || 'N/A' %>°F</td>
+                  <td><%= day[:low]&.round || 'N/A' %>°F</td>
+                  <td class="text-capitalize"><%= day[:description] || 'Unknown' %></td>
+                  <td><%= day[:humidity] || 'N/A' %>%</td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p>No forecast data available</p>
+      <% end %>
+    </div>
+  </div>
+</div>
+<% else %>
+  <div class="alert alert-info">
+    No weather data available. Please enter a valid location.
+  </div>
+<% end %>

@@ -1,0 +1,35 @@
+<!-- app/views/forecasts/index.html.erb -->
+<div class="container">
+  <h1>Weather Forecast</h1>
+  
+  <% if flash[:error] %>
+    <div class="alert alert-danger">
+      <%= flash[:error] %>
+    </div>
+  <% end %>
+  
+  <div class="card">
+    <div class="card-body">
+      <h2>Enter Your Location</h2>
+      
+      <%= form_tag("/forecasts", method: "post") do %>
+        <div class="form-group">
+          <%= label_tag :address, "Address or ZIP Code" %>
+          <%= text_field_tag :address, params[:address], class: "form-control", placeholder: "Enter address, city, or ZIP code" %>
+        </div>
+        
+        <div class="form-group">
+          <%= submit_tag "Get Weather", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+      
+      <p class="text-muted">
+        Enter a full address, city name, or a 5-digit ZIP code to get your weather forecast.
+      </p>
+    </div>
+  </div>
+  
+  <% if @current_weather && @forecast %>
+    <%= render partial: 'weather_data' %>
+  <% end %>
+</div>
