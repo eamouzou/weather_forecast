@@ -61,10 +61,12 @@ Rails.application.configure do
   # Enable fragment and page caching in development
   config.action_controller.perform_caching = true
 
-  # Use memory store for caching in development
   config.cache_store = :redis_cache_store, {
     url: ENV.fetch('REDIS_URL') { 'redis://localhost:6379/1' },
-    pool_size: 5,
+    connect_timeout: 1,
+    read_timeout: 1,
+    write_timeout: 1,
+    reconnect_attempts: 3,
     expires_in: 30.minutes
   }
 end
