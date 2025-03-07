@@ -29,7 +29,8 @@ class ForecastsController < ApplicationController
           Rails.logger.info "Scheduled background refresh for (#{coordinates[:lat]}, #{coordinates[:lon]})"
         end
       rescue StandardError => e
-        return handle_error(e)
+        flash[:error] = "Error retrieving weather data: #{e.message}"
+        redirect_to root_path and return
       end
     end
   end
@@ -101,9 +102,6 @@ class ForecastsController < ApplicationController
     # Add location details
     add_location_details(coordinates)
     add_to_recent_locations(@address)
-  rescue StandardError => e
-    # Return the result of handle_error to stop execution
-    return handle_error(e)
   end
 
   def get_recent_locations
