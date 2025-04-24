@@ -35,7 +35,7 @@ gem "thruster", require: false
 
 # Redis for caching
 gem "redis", "~> 5.0"
-gem "connection_pool", "~> 2.4"
+gem "connection_pool", "~> 2.5"
 
 # Sidekiq for background processing
 gem "sidekiq", "~> 7.1"
