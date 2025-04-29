@@ -97,7 +97,7 @@ GEM
       xpath (~> 3.2)
     coderay (1.1.3)
     concurrent-ruby (1.3.5)
-    connection_pool (2.5.0)
+    connection_pool (2.5.3)
     crack (1.0.0)
       bigdecimal
       rexml
@@ -376,7 +376,7 @@ DEPENDENCIES
   bootsnap
   brakeman
   capybara
-  connection_pool (~> 2.4)
+  connection_pool (~> 2.5)
   debug
   dotenv-rails
   httparty
